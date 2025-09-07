@@ -35,9 +35,9 @@ struct dht_return read_dht22(void) {
   ESP_LOGI("read_dht22", "Starting DHT22 read\n");
 
   // DHT sends back 40 bits (5 bytes)
-  int8_t data[5] = {0};
-  int8_t bit_index = 7;
-  int8_t byte_index = 0;
+  uint8_t data[5] = {0};
+  uint8_t bit_index = 7;
+  uint8_t byte_index = 0;
 
   // https: // github.com/gosouth/DHT22/blob/master/DHT22.pdf
   gpio_set_direction(DHT_GPIO, GPIO_MODE_OUTPUT);
@@ -78,11 +78,23 @@ struct dht_return read_dht22(void) {
       bit_index--;
     }
   }
+
+  // Debug: print raw data
+  ESP_LOGI("debug", "Raw data: [%d, %d, %d, %d, %d]", data[0], data[1], data[2],
+           data[3], data[4]);
+
+  // DHT22 data format:
+  // data[0]: humidity high byte
+  // data[1]: humidity low byte
+  // data[2]: temperature high byte (bit 7 = sign, bits 6-0 = integer part)
+  // data[3]: temperature low byte (decimal part)
+  // data[4]: checksum
   float temperature = 0.;
   temperature = data[2] & 0x7F;
   temperature *= 0x100; // >> 8
   temperature += data[3];
   temperature /= 10;
+
   if (data[2] & 0x80) // negative temp, brrr it's freezing
     temperature *= -1;
 
