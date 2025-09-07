@@ -4,6 +4,9 @@
 #include "freertos/task.h"
 #include "hal/gpio_types.h"
 
+#include "driver/gpio.h"
+#include "include/dht22.h"
+#include "portmacro.h"
 // Datasheet:
 // https://www.espressif.com/sites/default/files/documentation/esp32_technical_reference_manual_en.pdf#iomuxgpio
 
@@ -29,6 +32,8 @@ typedef enum {
 } gpio_level;
 
 void my_gpio_enable(gpio_num_t gpio_num) {
+  // Get pointers to the registers, They are uint32 because they are 32 bits
+  // wide (in datasheet)
   volatile uint32_t *gpio_enable_reg = (volatile uint32_t *)GPIO_ENABLE_REG;
   *gpio_enable_reg = (1 << gpio_num);
 }
@@ -58,18 +63,9 @@ void app_main(void) {
 
   ESP_LOGI(taskName, "Hello, starting up \n");
 
-  // Get pointers to the registers, They are uint32 because they are 32 bits
-  // wide (in datasheet)
-  volatile uint32_t *gpio_out_w1ts_reg = (volatile uint32_t *)GPIO_OUT_W1TS_REG;
-  volatile uint32_t *gpio_out_w1tc_reg = (volatile uint32_t *)GPIO_OUT_W1TC_REG;
-  volatile uint32_t *gpio_enable_reg = (volatile uint32_t *)GPIO_ENABLE_REG;
-
-  my_gpio_enable(BLINK_LED);
-
   while (1) {
-    my_gpio_set_level(BLINK_LED, GPIO_LEVEL_HIGH);
-    vTaskDelay(pdMS_TO_TICKS(500));
-    my_gpio_set_level(BLINK_LED, GPIO_LEVEL_LOW);
-    vTaskDelay(pdMS_TO_TICKS(500));
+    ESP_LOGI(taskName, "=== Reading DHT ===\n");
+    read_dht22();
+    vTaskDelay(3000 / portTICK_PERIOD_MS);
   }
 }
