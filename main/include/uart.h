@@ -3,4 +3,4 @@ void uart_set_baud_rate(int rate);
 void uart_send_byte(char c);
 void uart_send_str(char *str);
 
-void uart_get_bytes(const void *buf, int nbyte);
+void uart_get_byte(const void *byte);

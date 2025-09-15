@@ -1,11 +1,12 @@
 #include "driver/gpio.h"
 #include "esp_rom_sys.h"
+#include "hal/gpio_types.h"
 
 // Bit banging uart cuz why not
 
 #define SECONDS_PER_MICROSECOND 1'000'000
 
-int TX_PIN = 2;
+int TX_PIN = 4;
 int baud_rate = 9600;
 
 void uart_set_tx_pin(int gpio_num) { TX_PIN = gpio_num; }
@@ -47,4 +48,28 @@ void uart_send_str(char *str) {
   while (*str) {
     uart_send_byte(*str++);
   }
+}
+
+int RX_PIN = 4;
+
+void uart_get_byte(char *byte) {
+
+  float dt_us = (1.0 / baud_rate) * SECONDS_PER_MICROSECOND;
+
+  gpio_set_direction(RX_PIN, GPIO_MODE_INPUT);
+
+  while (gpio_get_level(RX_PIN) == 1)
+    // pin set to low, this is the start bit
+    esp_rom_delay_us(dt_us);
+
+  // start reading data
+  for (int i = 0; i < 8; i++) {
+    if (gpio_get_level(RX_PIN) == 1) {
+      *byte |= 1 << i;
+    } else {
+      *byte &= ~(1 << i);
+    }
+    esp_rom_delay_us(dt_us);
+  }
+  esp_rom_delay_us(dt_us);
 }
